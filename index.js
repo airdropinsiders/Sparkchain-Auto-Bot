@@ -35,11 +35,12 @@ class WebSocketBot {
     parseProxy(proxyString) {
         try {
             let protocol, host, port;
+            
             if (proxyString.includes('://')) {
                 const url = new URL(proxyString);
                 protocol = url.protocol.replace(':', '');
                 host = url.hostname;
-                port = url.port;
+                port = url.port ? parseInt(url.port, 10) : null;
             } else {
                 const parts = proxyString.split(':');
                 if (parts.length === 3) {
@@ -48,13 +49,20 @@ class WebSocketBot {
                     [host, port] = parts;
                     protocol = 'http';
                 }
+                port = port ? parseInt(port, 10) : null;
             }
-            return { protocol: protocol.toLowerCase(), host, port: parseInt(port) };
+    
+            if (!protocol || !host || !port || isNaN(port)) {
+                throw new Error(`Invalid proxy format: ${proxyString}`);
+            }
+    
+            return { protocol: protocol.toLowerCase(), host, port };
         } catch (error) {
             console.error(chalk.red('Error parsing proxy:', proxyString, error.message));
             return null;
         }
     }
+    
 
     loadProxies() {
         try {
